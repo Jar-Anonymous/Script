@@ -1,4 +1,4 @@
-warn("[Vertex] Loading 1/4...")
+warn("[Vertex] Part 1/6 loading...")
 
 local TweenService     = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -19,18 +19,12 @@ local HAS_DRAWING   = pcall(function() return Drawing.new("Square") end)
 local HAS_WRITEFILE = pcall(function() return writefile end)
 local HAS_CLIPBOARD = pcall(function() return setclipboard end)
 local HAS_RAWMT     = pcall(function() return getrawmetatable end)
-local HAS_GETHUI    = pcall(function() return gethui end)
-local HAS_HOOK      = pcall(function() return hookfunction end)
-
-warn("[Vertex] Drawing: " .. tostring(HAS_DRAWING))
-warn("[Vertex] WriteFile: " .. tostring(HAS_WRITEFILE))
-warn("[Vertex] Hook: " .. tostring(HAS_HOOK))
 
 local Lang = {
     current = "English",
     strings = {
         English = {
-            farm="Farm", combat="Combat", utility="Utility", misc="Misc", config="Config", credits="Credits",
+            farm="Farm", combat="Combat", visual="Visual", utility="Utility", misc="Misc", config="Config", credits="Credits",
             coming_soon="COMING SOON", farm_sub="Farm features are being prepared.",
             owner="Owner", made_by="Made by", country="Country", version="Version", ui_style="UI Style",
             github="GitHub", discord="Discord", thanks="Special Thanks",
@@ -51,7 +45,7 @@ local Lang = {
             enabled="Enabled", disabled="Disabled", language="Language",
         },
         Indonesia = {
-            farm="Tani", combat="Tempur", utility="Utilitas", misc="Lain", config="Konfig", credits="Kredit",
+            farm="Tani", combat="Tempur", visual="Visual", utility="Utilitas", misc="Lain", config="Konfig", credits="Kredit",
             coming_soon="SEGERA HADIR", farm_sub="Fitur tani sedang disiapkan.",
             owner="Pemilik", made_by="Dibuat oleh", country="Negara", version="Versi", ui_style="Gaya UI",
             github="GitHub", discord="Discord", thanks="Terima Kasih",
@@ -72,7 +66,7 @@ local Lang = {
             enabled="Aktif", disabled="Mati", language="Bahasa",
         },
         Chinese = {
-            farm="农场", combat="战斗", utility="实用", misc="杂项", config="配置", credits="鸣谢",
+            farm="农场", combat="战斗", visual="视觉", utility="实用", misc="杂项", config="配置", credits="鸣谢",
             coming_soon="即将推出", farm_sub="农场功能正在准备中。",
             owner="拥有者", made_by="制作", country="国家", version="版本", ui_style="界面风格",
             github="GitHub", discord="Discord", thanks="特别感谢",
@@ -93,7 +87,7 @@ local Lang = {
             enabled="开启", disabled="关闭", language="语言",
         },
         Japanese = {
-            farm="農場", combat="戦闘", utility="ユーティリティ", misc="その他", config="設定", credits="クレジット",
+            farm="農場", combat="戦闘", visual="ビジュアル", utility="ユーティリティ", misc="その他", config="設定", credits="クレジット",
             coming_soon="近日公開", farm_sub="農場機能準備中。",
             owner="オーナー", made_by="製作者", country="国", version="バージョン", ui_style="UI スタイル",
             github="GitHub", discord="Discord", thanks="スペシャルサンクス",
@@ -114,7 +108,7 @@ local Lang = {
             enabled="有効", disabled="無効", language="言語",
         },
         Russian = {
-            farm="Ферма", combat="Бой", utility="Утилита", misc="Прочее", config="Конфиг", credits="Титры",
+            farm="Ферма", combat="Бой", visual="Визуал", utility="Утилита", misc="Прочее", config="Конфиг", credits="Титры",
             coming_soon="СКОРО", farm_sub="Функции фермы готовятся.",
             owner="Владелец", made_by="Создано", country="Страна", version="Версия", ui_style="Стиль UI",
             github="GitHub", discord="Discord", thanks="Благодарности",
@@ -199,6 +193,22 @@ local function stroke(o, col, th, tr)
     s.Thickness = th or 1
     s.Transparency = tr or 0.3
     return s
+end
+local function ripple(parent, x, y)
+    local r = Instance.new("Frame", parent)
+    r.Size = UDim2.new(0, 0, 0, 0)
+    r.Position = UDim2.new(0, x, 0, y)
+    r.AnchorPoint = Vector2.new(0.5, 0.5)
+    r.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    r.BackgroundTransparency = 0.7
+    r.BorderSizePixel = 0
+    r.ZIndex = 5
+    corner(r, 100)
+    TweenService:Create(r, TweenInfo.new(0.55, Enum.EasingStyle.Quart), {
+        Size = UDim2.new(0, 120, 0, 120),
+        BackgroundTransparency = 1
+    }):Play()
+    task.delay(0.6, function() if r.Parent then r:Destroy() end end)
 end
 
 local Main = Instance.new("Frame")
@@ -316,6 +326,10 @@ local function headerBtn(text, hoverColor, xOff)
     b.MouseLeave:Connect(function()
         TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = C.panel, TextColor3 = C.textDim}):Play()
         TweenService:Create(s, TweenInfo.new(0.15), {Color = C.border, Transparency = 0.3}):Play()
+    end)
+    b.MouseButton1Down:Connect(function()
+        local p = UserInputService:GetMouseLocation()
+        ripple(b, p.X - b.AbsolutePosition.X, p.Y - b.AbsolutePosition.Y)
     end)
     return b
 end
@@ -463,26 +477,36 @@ local function makeTabButton(key, order)
     Tabs[key] = page
 
     b.MouseButton1Click:Connect(function()
-        for name, pg in pairs(Tabs) do pg.Visible = (name == key) end
+        for name, pg in pairs(Tabs) do
+            if name == key then
+                pg.Visible = true
+                pg.Position = UDim2.new(0, 15, 0, 0)
+                TweenService:Create(pg, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Position = UDim2.new(0, 0, 0, 0)
+                }):Play()
+            else
+                pg.Visible = false
+            end
+        end
         TopTitle.Text = T(key)
         for _, other in pairs(TabList:GetChildren()) do
             if other:IsA("TextButton") then
-                TweenService:Create(other, TweenInfo.new(0.15), {BackgroundTransparency = 1, TextColor3 = C.textDim}):Play()
+                TweenService:Create(other, TweenInfo.new(0.18), {BackgroundTransparency = 1, TextColor3 = C.textDim}):Play()
                 local ind = other:FindFirstChildWhichIsA("Frame")
                 if ind then
-                    TweenService:Create(ind, TweenInfo.new(0.15), {Size = UDim2.new(0, 3, 0, 0)}):Play()
+                    TweenService:Create(ind, TweenInfo.new(0.18), {Size = UDim2.new(0, 3, 0, 0)}):Play()
                 end
             end
         end
-        TweenService:Create(b, TweenInfo.new(0.15), {BackgroundTransparency = 0, BackgroundColor3 = C.panel, TextColor3 = C.text}):Play()
-        TweenService:Create(indicator, TweenInfo.new(0.15), {Size = UDim2.new(0, 3, 0, 18)}):Play()
+        TweenService:Create(b, TweenInfo.new(0.18), {BackgroundTransparency = 0, BackgroundColor3 = C.panel, TextColor3 = C.text}):Play()
+        TweenService:Create(indicator, TweenInfo.new(0.18), {Size = UDim2.new(0, 3, 0, 18)}):Play()
     end)
 
     TabButtons[key] = b
     return b, page
 end
 
-local TabKeys = {"farm", "combat", "utility", "misc", "config", "credits"}
+local TabKeys = {"farm", "combat", "visual", "utility", "misc", "config", "credits"}
 for i, k in ipairs(TabKeys) do makeTabButton(k, i) end
 
 --[END OF PART 1]
@@ -832,6 +856,10 @@ local function makeButton(parent, label, order, color, callback)
     b.MouseButton1Click:Connect(function()
         if callback then pcall(callback) end
     end)
+    b.MouseButton1Down:Connect(function()
+        local p = UserInputService:GetMouseLocation()
+        ripple(b, p.X - b.AbsolutePosition.X, p.Y - b.AbsolutePosition.Y)
+    end)
     return b
 end
 
@@ -901,10 +929,7 @@ GlassSub.ZIndex = 7
 
 local Combat = {
     aimbot = false, silent = true, target = "Head", fov = 150,
-    espEnabled = false, box = true, chams = true, name = true,
-    health = true, distance = true, tracer = true,
     teamCheck = false, wallCheck = false, priority = "Nearest",
-    drawings = {},
 }
 
 local targetParts = {"Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart", "LeftFoot", "RightFoot", "LeftLeg", "RightLeg"}
@@ -979,153 +1004,6 @@ local function getClosestPlayer()
     return closest
 end
 
-local function clearESP(plr)
-    if Combat.drawings[plr] then
-        for _, v in pairs(Combat.drawings[plr]) do
-            pcall(function() v:Remove() end)
-        end
-        Combat.drawings[plr] = nil
-    end
-end
-
-local function newDrawing(class, props)
-    if not HAS_DRAWING then return nil end
-    local ok, obj = pcall(function() return Drawing.new(class) end)
-    if not ok or not obj then return nil end
-    for k, v in pairs(props) do obj[k] = v end
-    return obj
-end
-
-local function setupESP(plr)
-    clearESP(plr)
-    if not HAS_DRAWING then return end
-    Combat.drawings[plr] = {
-        box    = newDrawing("Square", {Thickness = 1.5, Color = C.accentHi, Filled = false, Transparency = 1}),
-        name   = newDrawing("Text", {Size = 13, Center = true, Outline = true, Color = C.text, Transparency = 1}),
-        hpText = newDrawing("Text", {Size = 11, Center = true, Outline = true, Color = C.green, Transparency = 1}),
-        dist   = newDrawing("Text", {Size = 11, Center = true, Outline = true, Color = C.cyan, Transparency = 1}),
-        tracer = newDrawing("Line", {Thickness = 1, Color = C.accentHi, Transparency = 1}),
-    }
-end
-
-local function updateESP()
-    if not HAS_DRAWING then return end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local char = plr.Character
-            if not char or not char:FindFirstChild("Humanoid") then
-                if Combat.drawings[plr] then clearESP(plr) end
-            else
-                if not Combat.drawings[plr] and Combat.espEnabled then setupESP(plr) end
-                local d = Combat.drawings[plr]
-                if d then
-                    local hum = char:FindFirstChild("Humanoid")
-                    local root = char:FindFirstChild("HumanoidRootPart")
-                    local head = char:FindFirstChild("Head")
-                    if not hum or not root or not head then
-                        clearESP(plr)
-                    else
-                        local visible = Combat.espEnabled and hum.Health > 0 and not sameTeam(plr)
-                        if not visible then
-                            for _, v in pairs(d) do pcall(function() v.Visible = false end) end
-                            for _, hl in ipairs(char:GetChildren()) do
-                                if hl:IsA("Highlight") and hl.Name == "VertexCham" then hl.Enabled = false end
-                            end
-                        else
-                            local top = head.Position + Vector3.new(0, head.Size.Y / 2 + 0.4, 0)
-                            local bottom = root.Position - Vector3.new(0, 3, 0)
-                            local tPos, tOn = Camera:WorldToViewportPoint(top)
-                            local bPos, bOn = Camera:WorldToViewportPoint(bottom)
-                            if tOn and bOn then
-                                local height = (Vector2.new(tPos.X, tPos.Y) - Vector2.new(bPos.X, bPos.Y)).Magnitude
-                                local width = height * 0.55
-                                local centerX = (tPos.X + bPos.X) / 2
-                                if d.box then
-                                    d.box.Visible = Combat.box
-                                    if Combat.box then
-                                        d.box.Size = Vector2.new(width, height)
-                                        d.box.Position = Vector2.new(centerX - width / 2, tPos.Y)
-                                    end
-                                end
-                                if d.name then
-                                    d.name.Visible = Combat.name
-                                    if Combat.name then
-                                        d.name.Position = Vector2.new(centerX, tPos.Y - 18)
-                                        d.name.Text = plr.Name
-                                    end
-                                end
-                                if d.hpText then
-                                    d.hpText.Visible = Combat.health
-                                    if Combat.health then
-                                        d.hpText.Position = Vector2.new(centerX, bPos.Y + 2)
-                                        d.hpText.Text = math.floor(hum.Health) .. " / " .. math.floor(hum.MaxHealth)
-                                        local ratio = hum.Health / math.max(1, hum.MaxHealth)
-                                        d.hpText.Color = Color3.fromRGB(255 * (1 - ratio) + 40, 200 * ratio + 55, 90 * ratio + 60)
-                                    end
-                                end
-                                if d.dist then
-                                    d.dist.Visible = Combat.distance
-                                    if Combat.distance then
-                                        local myChar = LocalPlayer.Character
-                                        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                                        if myRoot then
-                                            local dist = math.floor((myRoot.Position - root.Position).Magnitude)
-                                            d.dist.Position = Vector2.new(centerX, bPos.Y + 18)
-                                            d.dist.Text = dist .. " studs"
-                                        end
-                                    end
-                                end
-                                if d.tracer then
-                                    d.tracer.Visible = Combat.tracer
-                                    if Combat.tracer then
-                                        d.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                                        d.tracer.To = Vector2.new(centerX, bPos.Y)
-                                    end
-                                end
-                                local cham = char:FindFirstChild("VertexCham")
-                                if Combat.chams then
-                                    if not cham then
-                                        cham = Instance.new("Highlight")
-                                        cham.Name = "VertexCham"
-                                        cham.FillColor = C.accent
-                                        cham.OutlineColor = C.accentHi
-                                        cham.FillTransparency = 0.6
-                                        cham.OutlineTransparency = 0.1
-                                        cham.Parent = char
-                                    end
-                                    cham.Enabled = true
-                                    cham.Adornee = char
-                                elseif cham then
-                                    cham.Enabled = false
-                                end
-                            else
-                                for _, v in pairs(d) do pcall(function() v.Visible = false end) end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-local function clearAllESP()
-    for plr in pairs(Combat.drawings) do clearESP(plr) end
-    Combat.drawings = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr.Character then
-            local c = plr.Character:FindFirstChild("VertexCham")
-            if c then c:Destroy() end
-        end
-    end
-end
-
-RunService.RenderStepped:Connect(function()
-    if Combat.espEnabled then pcall(updateESP) end
-end)
-
-Players.PlayerRemoving:Connect(function(plr) clearESP(plr) end)
-
 pcall(function()
     if not HAS_RAWMT then return end
     local mt = getrawmetatable(game)
@@ -1169,19 +1047,206 @@ makeSlider(CombatSec, "FOV", 20, 800, 150, 6, false, function(v) Combat.fov = v 
 makeDropdown(CombatSec, T("target_prio"), priorityList, 1, 7, function(opt) Combat.priority = opt end)
 makeToggle(CombatSec, T("team_check"), false, 8, function(v) Combat.teamCheck = v end)
 makeToggle(CombatSec, T("wall_check"), false, 9, function(v) Combat.wallCheck = v end)
-makeLabel(CombatSec, "Silent aim intercepts raycast when executor supports it.", 10)
-
-local ESPSec = makeCard(Tabs.combat, "ESP Visual", 2)
-makeToggle(ESPSec, "Enable ESP", false, 3, function(v) Combat.espEnabled = v if not v then clearAllESP() end end)
-makeToggle(ESPSec, T("esp_box"), true, 4, function(v) Combat.box = v end)
-makeToggle(ESPSec, T("esp_name"), true, 5, function(v) Combat.name = v end)
-makeToggle(ESPSec, T("esp_health"), true, 6, function(v) Combat.health = v end)
-makeToggle(ESPSec, T("esp_dist"), true, 7, function(v) Combat.distance = v end)
-makeToggle(ESPSec, T("esp_tracer"), true, 8, function(v) Combat.tracer = v end)
-makeToggle(ESPSec, T("esp_chams"), true, 9, function(v) Combat.chams = v end)
-makeLabel(ESPSec, "ESP requires Drawing library. Not all executors support it.", 10)
+makeLabel(CombatSec, "Silent aim intercepts raycast when executor supports getrawmetatable.", 10)
 
 --[END OF PART 2]
+local Visual = {
+    espEnabled = false, box = true, chams = true, name = true,
+    health = true, distance = true, tracer = true,
+    teamCheck = false, wallCheck = false,
+    drawings = {},
+}
+
+local function clearESP(plr)
+    if Visual.drawings[plr] then
+        for _, v in pairs(Visual.drawings[plr]) do
+            pcall(function() v:Remove() end)
+        end
+        Visual.drawings[plr] = nil
+    end
+end
+
+local function newDrawing(class, props)
+    if not HAS_DRAWING then return nil end
+    local ok, obj = pcall(function() return Drawing.new(class) end)
+    if not ok or not obj then return nil end
+    for k, v in pairs(props) do obj[k] = v end
+    return obj
+end
+
+local function setupESP(plr)
+    clearESP(plr)
+    if not HAS_DRAWING then return end
+    Visual.drawings[plr] = {
+        box    = newDrawing("Square", {Thickness = 1.5, Color = C.accentHi, Filled = false, Transparency = 1}),
+        name   = newDrawing("Text", {Size = 13, Center = true, Outline = true, Color = C.text, Transparency = 1}),
+        hpText = newDrawing("Text", {Size = 11, Center = true, Outline = true, Color = C.green, Transparency = 1}),
+        dist   = newDrawing("Text", {Size = 11, Center = true, Outline = true, Color = C.cyan, Transparency = 1}),
+        tracer = newDrawing("Line", {Thickness = 1, Color = C.accentHi, Transparency = 1}),
+    }
+end
+
+local function sameTeamVisual(plr)
+    if not Visual.teamCheck then return false end
+    if not LocalPlayer.Team or not plr.Team then return false end
+    return LocalPlayer.Team == plr.Team
+end
+
+local function isVisibleVisual(part)
+    if not Visual.wallCheck then return true end
+    local myChar = LocalPlayer.Character
+    if not myChar then return true end
+    local origin = Camera.CFrame.Position
+    local dir = part.Position - origin
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {myChar, part.Parent}
+    local ray = Workspace:Raycast(origin, dir, params)
+    return ray == nil
+end
+
+local function updateESP()
+    if not HAS_DRAWING then return end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local char = plr.Character
+            if not char or not char:FindFirstChild("Humanoid") then
+                if Visual.drawings[plr] then clearESP(plr) end
+            else
+                if not Visual.drawings[plr] and Visual.espEnabled then setupESP(plr) end
+                local d = Visual.drawings[plr]
+                if d then
+                    local hum = char:FindFirstChild("Humanoid")
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    local head = char:FindFirstChild("Head")
+                    if not hum or not root or not head then
+                        clearESP(plr)
+                    else
+                        local visible = Visual.espEnabled and hum.Health > 0 and not sameTeamVisual(plr)
+                        if visible and Visual.wallCheck then
+                            local headPart = char:FindFirstChild("Head")
+                            if headPart then
+                                visible = isVisibleVisual(headPart)
+                            end
+                        end
+                        if not visible then
+                            for _, v in pairs(d) do pcall(function() v.Visible = false end) end
+                            for _, hl in ipairs(char:GetChildren()) do
+                                if hl:IsA("Highlight") and hl.Name == "VertexCham" then hl.Enabled = false end
+                            end
+                        else
+                            local top = head.Position + Vector3.new(0, head.Size.Y / 2 + 0.4, 0)
+                            local bottom = root.Position - Vector3.new(0, 3, 0)
+                            local tPos, tOn = Camera:WorldToViewportPoint(top)
+                            local bPos, bOn = Camera:WorldToViewportPoint(bottom)
+                            if tOn and bOn then
+                                local height = (Vector2.new(tPos.X, tPos.Y) - Vector2.new(bPos.X, bPos.Y)).Magnitude
+                                local width = height * 0.55
+                                local centerX = (tPos.X + bPos.X) / 2
+                                if d.box then
+                                    d.box.Visible = Visual.box
+                                    if Visual.box then
+                                        d.box.Size = Vector2.new(width, height)
+                                        d.box.Position = Vector2.new(centerX - width / 2, tPos.Y)
+                                    end
+                                end
+                                if d.name then
+                                    d.name.Visible = Visual.name
+                                    if Visual.name then
+                                        d.name.Position = Vector2.new(centerX, tPos.Y - 18)
+                                        d.name.Text = plr.Name
+                                    end
+                                end
+                                if d.hpText then
+                                    d.hpText.Visible = Visual.health
+                                    if Visual.health then
+                                        d.hpText.Position = Vector2.new(centerX, bPos.Y + 2)
+                                        d.hpText.Text = math.floor(hum.Health) .. " / " .. math.floor(hum.MaxHealth)
+                                        local ratio = hum.Health / math.max(1, hum.MaxHealth)
+                                        d.hpText.Color = Color3.fromRGB(255 * (1 - ratio) + 40, 200 * ratio + 55, 90 * ratio + 60)
+                                    end
+                                end
+                                if d.dist then
+                                    d.dist.Visible = Visual.distance
+                                    if Visual.distance then
+                                        local myChar = LocalPlayer.Character
+                                        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                                        if myRoot then
+                                            local dist = math.floor((myRoot.Position - root.Position).Magnitude)
+                                            d.dist.Position = Vector2.new(centerX, bPos.Y + 18)
+                                            d.dist.Text = dist .. " studs"
+                                        end
+                                    end
+                                end
+                                if d.tracer then
+                                    d.tracer.Visible = Visual.tracer
+                                    if Visual.tracer then
+                                        d.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                                        d.tracer.To = Vector2.new(centerX, bPos.Y)
+                                    end
+                                end
+                                local cham = char:FindFirstChild("VertexCham")
+                                if Visual.chams then
+                                    if not cham then
+                                        cham = Instance.new("Highlight")
+                                        cham.Name = "VertexCham"
+                                        cham.FillColor = C.accent
+                                        cham.OutlineColor = C.accentHi
+                                        cham.FillTransparency = 0.6
+                                        cham.OutlineTransparency = 0.1
+                                        cham.Parent = char
+                                    end
+                                    cham.Enabled = true
+                                    cham.Adornee = char
+                                elseif cham then
+                                    cham.Enabled = false
+                                end
+                            else
+                                for _, v in pairs(d) do pcall(function() v.Visible = false end) end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function clearAllESP()
+    for plr in pairs(Visual.drawings) do clearESP(plr) end
+    Visual.drawings = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Character then
+            local c = plr.Character:FindFirstChild("VertexCham")
+            if c then c:Destroy() end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if Visual.espEnabled then pcall(updateESP) end
+end)
+
+Players.PlayerRemoving:Connect(function(plr) clearESP(plr) end)
+
+local VisualSec = makeCard(Tabs.visual, "ESP Player", 1)
+makeToggle(VisualSec, "Enable ESP", false, 3, function(v)
+    Visual.espEnabled = v
+    if not v then clearAllESP() end
+end)
+makeToggle(VisualSec, T("esp_box"), true, 4, function(v) Visual.box = v end)
+makeToggle(VisualSec, T("esp_name"), true, 5, function(v) Visual.name = v end)
+makeToggle(VisualSec, T("esp_health"), true, 6, function(v) Visual.health = v end)
+makeToggle(VisualSec, T("esp_dist"), true, 7, function(v) Visual.distance = v end)
+makeToggle(VisualSec, T("esp_tracer"), true, 8, function(v) Visual.tracer = v end)
+makeToggle(VisualSec, T("esp_chams"), true, 9, function(v) Visual.chams = v end)
+makeToggle(VisualSec, T("team_check"), false, 10, function(v) Visual.teamCheck = v end)
+makeToggle(VisualSec, T("wall_check"), false, 11, function(v) Visual.wallCheck = v end)
+makeLabel(VisualSec, "ESP needs Drawing library support. Not all executors have it.", 12)
+
+local ChamsSec = makeCard(Tabs.visual, "Chams Colors", 2)
+makeLabel(ChamsSec, "Chams highlight is enabled via ESP toggles.", 3)
+
 local UtilState = {
     speed = 16, jump = 50, noclip = false, infJump = false,
     fly = false, flySpeed = 60, antiAfk = false, fullbright = false,
@@ -1233,6 +1298,11 @@ makeSlider(UtilSec, T("walk_speed"), 16, 300, 16, 3, false, function(v) UtilStat
 makeSlider(UtilSec, T("jump_power"), 50, 300, 50, 4, false, function(v) UtilState.jump = v applyJump() end)
 makeToggle(UtilSec, T("noclip"), false, 5, function(v) UtilState.noclip = v end)
 makeToggle(UtilSec, T("inf_jump"), false, 6, function(v) UtilState.infJump = v end)
+makeButton(UtilSec, "Reset Speed/Jump", 7, C.cardHi, function()
+    UtilState.speed = 16 UtilState.jump = 50
+    applySpeed() applyJump()
+    notify("Reset", true)
+end)
 
 local FlySec = makeCard(Tabs.utility, "Fly", 2)
 makeToggle(FlySec, T("fly"), false, 3, function(v)
@@ -1245,7 +1315,7 @@ makeToggle(FlySec, T("fly"), false, 3, function(v)
     end
 end)
 makeSlider(FlySec, "Fly Speed", 20, 300, 60, 4, false, function(v) UtilState.flySpeed = v end)
-makeDropdown(FlySec, "Device (change)", {"PC", "Laptop", "Tablet", "Handphone"}, 1, 5, function(opt)
+makeDropdown(FlySec, "Device", {"PC", "Laptop", "Tablet", "Handphone"}, 1, 5, function(opt)
     flyDevice = opt
     if UtilState.fly then
         if opt == "Tablet" or opt == "Handphone" then
@@ -1255,35 +1325,7 @@ makeDropdown(FlySec, "Device (change)", {"PC", "Laptop", "Tablet", "Handphone"},
         end
     end
 end)
-makeLabel(FlySec, "PC/Laptop: WASD + Space + Shift. Tablet/HP: joystick + ▲▼.", 6)
-
-local UtilSec2 = makeCard(Tabs.utility, "Visual", 3)
-makeToggle(UtilSec2, T("fullbright"), false, 3, function(v)
-    UtilState.fullbright = v
-    Lighting.Brightness = v and 3 or 2
-    Lighting.Ambient = v and Color3.fromRGB(200,200,200) or Color3.fromRGB(70,70,70)
-    Lighting.OutdoorAmbient = v and Color3.fromRGB(180,180,180) or Color3.fromRGB(128,128,128)
-end)
-makeToggle(UtilSec2, T("remove_fog"), false, 4, function(v)
-    UtilState.noFog = v
-    Lighting.FogEnd = v and 100000 or 1000
-    Lighting.FogStart = v and 0 or 0
-end)
-makeSlider(UtilSec2, T("fov_changer"), 40, 120, 70, 5, false, function(v)
-    UtilState.fov = v
-    Camera.FieldOfView = v
-end)
-makeToggle(UtilSec2, T("fps_boost"), false, 6, function(v)
-    UtilState.fpsBoost = v
-    Lighting.GlobalShadows = not v
-end)
-
-local UtilSec3 = makeCard(Tabs.utility, "Physics", 4)
-makeToggle(UtilSec3, T("anti_afk"), false, 3, function(v) UtilState.antiAfk = v end)
-makeSlider(UtilSec3, "Gravity", 20, 400, 196, 4, false, function(v)
-    UtilState.gravity = v
-    Workspace.Gravity = v
-end)
+makeLabel(FlySec, "PC/Laptop uses WASD + Space + Shift. Tablet/HP uses joystick + ▲▼.", 6)
 
 RunService.RenderStepped:Connect(function()
     if UtilState.noclip then
@@ -1342,7 +1384,36 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-local MiscState = {autoRejoin = false, hidePlayers = false, freezeSelf = false, godmode = false, dmgIndicator = false}
+local UtilSec2 = makeCard(Tabs.utility, "Visual", 3)
+makeToggle(UtilSec2, T("fullbright"), false, 3, function(v)
+    UtilState.fullbright = v
+    Lighting.Brightness = v and 3 or 2
+    Lighting.Ambient = v and Color3.fromRGB(200,200,200) or Color3.fromRGB(70,70,70)
+    Lighting.OutdoorAmbient = v and Color3.fromRGB(180,180,180) or Color3.fromRGB(128,128,128)
+end)
+makeToggle(UtilSec2, T("remove_fog"), false, 4, function(v)
+    UtilState.noFog = v
+    Lighting.FogEnd = v and 100000 or 1000
+    Lighting.FogStart = v and 0 or 0
+end)
+makeSlider(UtilSec2, T("fov_changer"), 40, 120, 70, 5, false, function(v)
+    UtilState.fov = v
+    Camera.FieldOfView = v
+end)
+makeToggle(UtilSec2, T("fps_boost"), false, 6, function(v)
+    UtilState.fpsBoost = v
+    Lighting.GlobalShadows = not v
+end)
+
+local UtilSec3 = makeCard(Tabs.utility, "Physics", 4)
+makeToggle(UtilSec3, T("anti_afk"), false, 3, function(v) UtilState.antiAfk = v end)
+makeSlider(UtilSec3, "Gravity", 20, 400, 196, 4, false, function(v)
+    UtilState.gravity = v
+    Workspace.Gravity = v
+end)
+
+--[END OF PART 3]
+local MiscState = {autoRejoin = false, hidePlayers = false, freezeSelf = false, godmode = false}
 
 local MiscSec = makeCard(Tabs.misc, "Server", 1)
 makeToggle(MiscSec, T("auto_rejoin"), false, 3, function(v) MiscState.autoRejoin = v end)
@@ -1398,8 +1469,7 @@ makeToggle(MiscSec2, T("freeze_self"), false, 4, function(v)
     end
 end)
 makeToggle(MiscSec2, T("godmode"), false, 5, function(v) MiscState.godmode = v end)
-makeToggle(MiscSec2, T("dmg_indicator"), false, 6, function(v) MiscState.dmgIndicator = v end)
-makeButton(MiscSec2, "Reset Character", 7, C.cardHi, function()
+makeButton(MiscSec2, "Reset Character", 6, C.cardHi, function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChildOfClass("Humanoid") then
         char.Humanoid.Health = 0
@@ -1648,7 +1718,7 @@ LocalPlayer.CharacterAdded:Connect(function()
     if UtilState.fly then startFly() end
 end)
 
---[END OF PART 3]
+--[END OF PART 4]
 local ConfigState = {autoSave = false}
 local ConfigSec = makeCard(Tabs.config, "Config File", 1)
 
@@ -1825,6 +1895,7 @@ creditRow(286, T("github"), "Jar-Anonymous")
 creditRow(314, T("discord"), "-")
 creditRow(342, T("thanks"), "Vertex Team")
 
+--[END OF PART 5]
 local Float = Instance.new("ImageButton")
 Float.Parent = ScreenGui
 Float.Size = UDim2.new(0, 58, 0, 58)
@@ -1993,5 +2064,6 @@ task.delay(0.5, function()
     pcall(function() notify("Vertex Hub", true) end)
 end)
 
-warn("[Vertex] Loaded OK")
---[END OF PART 4]
+warn("[Vertex] All 6 parts loaded. Executor: " .. tostring(identifyexecutor and identifyexecutor() or "Unknown"))
+warn("[Vertex] Drawing: " .. tostring(HAS_DRAWING) .. " | WriteFile: " .. tostring(HAS_WRITEFILE) .. " | RawMT: " .. tostring(HAS_RAWMT))
+--[END OF PART 6]
